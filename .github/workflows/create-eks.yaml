@@ -1,0 +1,52 @@
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Project Name"
+        required: true
+        default: "ada-terraform"
+      grupoRevisores:
+        description: "Nome do grupo de revisores"
+        required: true
+        type: choice
+        default: "Contributors"
+        options:
+          - DevOps
+          - Contributors
+          - CreditoTeam
+
+name: "Create AWS EKS Cluster"
+
+jobs:
+  create-aws-cluster:
+    runs-on: ubuntu-latest
+    environment: "ADA"
+    steps:
+      - name: Checkout creation
+        uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        name: Setup Terraform
+
+      - name: "Terraform Init"
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: "Terraform Apply"
+        run: terraform apply -auto-approve
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: ./terraform
+        env:
+          AZDO_ORG_SERVICE_URL: ${{ vars.AZDO_ORG_SERVICE_URL }}
+          AZDO_PERSONAL_ACCESS_TOKEN: ${{ secrets.AZDO_PERSONAL_ACCESS_TOKEN }}
+          TF_VAR_reviewers_group_name: ${{ inputs.grupoRevisores }}
+          TF_VAR_ami_id: ${{ vars.ami_id }}
+          TF_VAR_aws_region: ${{ vars.aws_region }}
+          TF_VAR_aws_access_key: ${{ secrets.aws_access_key }}
+          TF_VAR_aws_secret_key: ${{ secrets.aws_secret_key }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_key }}
+      
+      - name: "Kubernetes config"
+        run: setup.sh
+        working-directory: ./terraform

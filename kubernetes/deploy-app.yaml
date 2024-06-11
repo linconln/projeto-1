@@ -1,0 +1,40 @@
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: consumer-svc
+#spec:
+#  selector:
+#    app: consumer
+#  ports:
+#  - protocol: "TCP"
+#    port: 6000
+#    targetPort: web
+#  type: ClusterIP
+#---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+spec:
+  selector:
+    matchLabels:
+      app: consumer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      initContainers:
+        - name: sleep
+          image: busybox:1.28
+          command: ["sleep", "30"]
+      containers:
+      - name: consumer
+        image: linconln/consumer:1
+        imagePullPolicy: Always
+        command:
+        - python
+        args:
+        - consumer.py
+

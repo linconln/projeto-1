@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: minio
+  name: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - image: quay.io/minio/minio
+        name: minio
+        ports:
+          - containerPort: 9000
+            name: api
+          - containerPort: 9001
+            name: web
+        command:
+        - /bin/bash
+        - -c
+        args:
+        - minio server /data --console-address :9001
+        volumeMounts:
+        - mountPath: /data
+          name: minio-vol
+        resources: {}
+      volumes:
+      - name: minio-vol
+        hostPath: # MinIO generally recommends using locally-attached volumes
+          path: /mnt/disk1/data # Specify a path to a local drive or volume on the Kubernetes worker node
+          type: DirectoryOrCreate # The path to the last directory must exist
+status: {}
